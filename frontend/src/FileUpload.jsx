@@ -1,22 +1,36 @@
-import React from 'react';
-import { Form } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Form, Button } from 'react-bootstrap';
 
-const FileUpload = ({ onFileChange }) => {
-  const handleChange = (event) => {
-    onFileChange(event.target.files[0]);
+const FileUpload = ({ onSubmit }) => {
+  const [file, setFile] = useState(null);
+
+  const handleFileChange = (event) => {
+    setFile(event.target.files[0]);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (file) {
+      onSubmit(file);
+    } else {
+      alert('Please select a file before submitting.');
+    }
   };
 
   return (
-    <Form className='bg-dark text-light p-3'>
+    <Form onSubmit={handleSubmit}>
       <Form.Group controlId='formFile' className='mb-3'>
         <Form.Label>Upload Audio File</Form.Label>
         <Form.Control
           type='file'
           accept='audio/*'
-          onChange={handleChange}
+          onChange={handleFileChange}
           className='bg-secondary text-light'
         />
       </Form.Group>
+      <Button variant='primary' type='submit'>
+        Submit
+      </Button>
     </Form>
   );
 };
