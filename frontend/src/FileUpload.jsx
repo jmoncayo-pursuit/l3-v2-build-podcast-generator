@@ -1,17 +1,20 @@
 import React from 'react';
 import { Form } from 'react-bootstrap';
 
-const FileUpload = () => {
+const FileUpload = ({ onFileChange }) => {
+  const handleChange = (event) => {
+    onFileChange(event.target.files[0]);
+  };
+
   return (
-    <Form className='mb-3'>
-      <Form.Group controlId='formFile'>
-        <Form.Label className='text-light'>
-          Upload Audio File
-        </Form.Label>
+    <Form className='bg-dark text-light p-3'>
+      <Form.Group controlId='formFile' className='mb-3'>
+        <Form.Label>Upload Audio File</Form.Label>
         <Form.Control
           type='file'
           accept='audio/*'
-          className='bg-dark text-light'
+          onChange={handleChange}
+          className='bg-secondary text-light'
         />
       </Form.Group>
     </Form>
