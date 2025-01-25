@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import React, { useState } from 'react';
 import { Container, Navbar, Button } from 'react-bootstrap';
 import FileUpload from './FileUpload';
@@ -7,13 +8,18 @@ const App = () => {
   const [audioFile, setAudioFile] = useState(null);
   const [transcript, setTranscript] = useState('');
   const [audioSrc, setAudioSrc] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileChange = (file) => {
     setAudioFile(file);
+    setTranscript(''); // Clear transcript if audio file is selected
+    setAudioSrc(''); // Clear audio source
   };
 
   const handleTranscriptChange = (text) => {
     setTranscript(text);
+    setAudioFile(null); // Clear audio file if transcript is entered
+    setAudioSrc(''); // Clear audio source
   };
 
   const handleFileSubmit = async (file) => {
@@ -42,11 +48,43 @@ const App = () => {
   };
 
   const handleGeneratePodcast = async () => {
+    setIsLoading(true);
+
     try {
-      const result = await generatePodcast(audioFile, transcript);
-      console.log('Podcast generated:', result);
+      let response;
+      if (transcript) {
+        response = await fetch(
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/generate-from-transcript`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ transcript }),
+          }
+        );
+      } else {
+        // Handle audio generation logic (to be implemented later)
+        console.error('Audio generation not yet implemented.');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        console.log('Podcast generated successfully');
+
+        // Set the audio source to the new URL
+        setAudioSrc(
+          `${import.meta.env.VITE_BACKEND_URL}${data.audio}`
+        );
+      } else {
+        console.error('Podcast generation failed:', data.message);
+      }
     } catch (error) {
       console.error('Error generating podcast:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,15 +94,18 @@ const App = () => {
         <Navbar.Brand href='#home'>Podcast Generator</Navbar.Brand>
       </Navbar>
       <h1>Welcome to the Podcast Generator</h1>
-      <FileUpload onSubmit={handleFileSubmit} />
+      <FileUpload
+        onSubmit={handleFileSubmit}
+        onChange={handleFileChange}
+      />
       <TranscriptInput onTranscriptChange={handleTranscriptChange} />
       <Button
         onClick={handleGeneratePodcast}
-        disabled={!audioFile || !transcript}
+        disabled={isLoading || (!audioFile && !transcript)}
       >
-        Generate Podcast
+        {isLoading ? 'Generating...' : 'Generate Podcast'}
       </Button>
-      <audio controls src={audioSrc} />
+      {audioSrc && <audio controls src={audioSrc} />}
     </Container>
   );
 };
