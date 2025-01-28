@@ -11,6 +11,7 @@ const FileUpload = ({ onSubmit }) => {
   const handleSubmit = (event) => {
     event.preventDefault();
     if (file) {
+      console.log("isfile", file)
       onSubmit(file);
     } else {
       alert('Please select a file before submitting.');

@@ -22,37 +22,26 @@ const App = () => {
     setAudioSrc(''); // Clear audio source
   };
 
-  const handleFileSubmit = async (file) => {
-    const formData = new FormData();
-    formData.append('audio', file);
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/upload`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-      if (data.success) {
-        console.log('File uploaded successfully:', data.filePath);
-        setAudioSrc(data.filePath);
-      } else {
-        console.error('File upload failed:', data.message);
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    }
-  };
-
-  const handleGeneratePodcast = async () => {
+  const handleGeneratePodcast = async (file = null) => {
     setIsLoading(true);
 
     try {
       let response;
-      if (transcript) {
+      if (file) {
+        // Handle audio generation
+        const formData = new FormData();
+        formData.append('audio', file);
+
+        response = await fetch(
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/generate-from-audio`,
+          {
+            method: 'POST',
+            body: formData, // Send audio file as FormData
+          }
+        );
+      } else if (transcript) {
         response = await fetch(
           `${
             import.meta.env.VITE_BACKEND_URL
@@ -66,8 +55,8 @@ const App = () => {
           }
         );
       } else {
-        // Handle audio generation logic (to be implemented later)
-        console.error('Audio generation not yet implemented.');
+        console.error('No audio file or transcript provided.');
+        return;
       }
 
       const data = await response.json();
@@ -91,16 +80,18 @@ const App = () => {
   return (
     <Container className='bg-dark text-light' fluid>
       <Navbar bg='dark' variant='dark' expand='lg'>
-        <Navbar.Brand href='#home'>Podcast Generator</Navbar.Brand>
+        <Navbar.Brand href='#home'>
+          <h1>Welcome to the Podcast Generator</h1>
+        </Navbar.Brand>
       </Navbar>
-      <h1>Welcome to the Podcast Generator</h1>
+
       <FileUpload
-        onSubmit={handleFileSubmit}
+        onSubmit={handleGeneratePodcast}
         onChange={handleFileChange}
       />
       <TranscriptInput onTranscriptChange={handleTranscriptChange} />
       <Button
-        onClick={handleGeneratePodcast}
+        onClick={() => handleGeneratePodcast(audioFile)}
         disabled={isLoading || (!audioFile && !transcript)}
       >
         {isLoading ? 'Generating...' : 'Generate Podcast'}
