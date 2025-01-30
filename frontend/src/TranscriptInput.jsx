@@ -9,7 +9,7 @@ const TranscriptInput = ({ onTranscriptChange }) => {
   return (
     <Form className='bg-dark text-light p-3'>
       <Form.Group controlId='transcriptInput' className='mb-3'>
-        <Form.Label>Paste Transcript</Form.Label>
+        <Form.Label> Paste Transcript </Form.Label>
         <Form.Control
           as='textarea'
           rows={3}
