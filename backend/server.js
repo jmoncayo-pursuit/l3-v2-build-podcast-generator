@@ -134,8 +134,11 @@ app.post(
   upload.single('audio'),
   async (req, res) => {
     try {
-      if (!req.file)
+      if (!req.file) {
         return res.status(400).send('No audio file uploaded.');
+      }
+
+      // Upload the audio file using the File API
       const uploadResult = await fileManager.uploadFile(
         req.file.path,
         {
@@ -144,31 +147,61 @@ app.post(
         }
       );
 
+      // Poll the file state until processing is complete
       let file = await fileManager.getFile(uploadResult.file.name);
       while (file.state === FileState.PROCESSING) {
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+        process.stdout.write('.'); // Indicate processing
+        await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 10 seconds
         file = await fileManager.getFile(uploadResult.file.name);
       }
 
-      if (file.state === FileState.FAILED)
+      // Check for processing failure
+      if (file.state === FileState.FAILED) {
         throw new Error('Audio processing failed.');
+      }
 
-      const result = await model.generateContent([
-        'Generate a transcript of the speech.',
-        { fileData: { fileUri: file.uri, mimeType: file.mimeType } },
-      ]);
-      const transcript = result.response.text();
-      const fileName = await createAudioFileFromText(transcript);
-      res.json({ success: true, audio: `/public/${fileName}` });
-    } catch (error) {
-      res
-        .status(500)
-        .json({ success: false, message: error.message });
-    } finally {
-      fs.unlink(
-        req.file.path,
-        (err) => err && console.error('File cleanup error:', err)
+      console.log(
+        `Uploaded file ${uploadResult.file.displayName} as: ${uploadResult.file.uri}`
       );
+
+      // Use the file URI in the generateContent call
+      const result = await model.generateContent([
+        'Generate a transcript of the speech.', // Your prompt
+        {
+          fileData: {
+            fileUri: file.uri,
+            mimeType: file.mimeType,
+          },
+        },
+      ]);
+
+      const transcript = result.response.text(); // Ensure this returns the transcript
+
+      // Generate podcast audio from the transcript
+      const fileName = await createAudioFileFromText(transcript);
+
+      // Send the path to the generated audio file and transcript in the response
+      res.json({
+        success: true,
+        audio: `/public/${fileName}`,
+        transcript,
+      });
+    } catch (error) {
+      console.error('Error generating podcast from audio:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error generating podcast from audio',
+        error: error.message,
+      });
+    } finally {
+      // Clean up the temporary file
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          console.error('Error deleting temporary file:', err);
+        } else {
+          console.log('Temporary file deleted successfully');
+        }
+      });
     }
   }
 );

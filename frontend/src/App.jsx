@@ -9,17 +9,20 @@ const App = () => {
   const [transcript, setTranscript] = useState('');
   const [audioSrc, setAudioSrc] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [generatedTranscript, setGeneratedTranscript] = useState('');
 
   const handleFileChange = (file) => {
     setAudioFile(file);
     setTranscript(''); // Clear transcript if audio file is selected
     setAudioSrc(''); // Clear audio source
+    setGeneratedTranscript('');
   };
 
   const handleTranscriptChange = (text) => {
     setTranscript(text);
     setAudioFile(null); // Clear audio file if transcript is entered
     setAudioSrc(''); // Clear audio source
+    setGeneratedTranscript('');
   };
 
   const handleGeneratePodcast = async (file = null) => {
@@ -67,6 +70,9 @@ const App = () => {
         setAudioSrc(
           `${import.meta.env.VITE_BACKEND_URL}${data.audio}`
         );
+
+        // Set the generated transcript to the current transcript
+        setGeneratedTranscript(transcript);
       } else {
         console.error('Podcast generation failed:', data.message);
       }
@@ -97,6 +103,13 @@ const App = () => {
         {isLoading ? 'Generating...' : 'Generate Podcast'}
       </Button>
       {audioSrc && <audio controls src={audioSrc} />}
+      {/* Display the generated transcript */}
+      {generatedTranscript && (
+        <div className='mt-3'>
+          <h4>Generated Transcript:</h4>
+          <p>{generatedTranscript}</p>
+        </div>
+      )}
     </Container>
   );
 };
