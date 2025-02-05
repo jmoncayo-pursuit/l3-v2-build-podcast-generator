@@ -26,3 +26,4 @@ public
 *.sln
 *.sw?
 *.tmp
+.env

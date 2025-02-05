@@ -162,12 +162,18 @@ app.post('/api/generate-from-conversation', async (req, res) => {
 
     // Loop through turns, generating audio for each speaker
     for (let i = 0; i < turns.length; i += 2) {
-      const speaker = turns[i].trim(); // "Host 1:" or "Host 2:"
-      const text = turns[i + 1].trim(); // The actual text
-
-      const voice = speaker === 'Host 1:' ? voice1 : voice2;
-      const fileName = await createAudioFileFromText(text, voice);
-      audioFiles.push(path.join(__dirname, 'public', fileName)); // Store the file path
+      if (i + 1 < turns.length) {
+        // **Check the array bounds**
+        const speaker = turns[i].trim(); // "Host 1:" or "Host 2:"
+        const text = turns[i + 1].trim(); // The actual text
+        const voice = speaker === 'Host 1:' ? voice1 : voice2;
+        const fileName = await createAudioFileFromText(text, voice);
+        audioFiles.push(path.join(__dirname, 'public', fileName)); // Store the file path
+      } else {
+        console.warn(
+          'Incomplete conversation turn detected. Skipping it.'
+        );
+      }
     }
 
     // Concatenate the audio files (you'll need to implement this function)
@@ -300,7 +306,7 @@ app.post(
         error.message.includes('overloaded') ||
         error.message.includes('temporarily unavailable')
       ) {
-        errorMessage = `Gemini API Error: The service is temporarily unavailable. Please try again later.`;
+        errorMessage = `Gemini API Error: The service is temporarily unavailable. Please try again later. Attempt ${retryCount}/${maxRetries}.`;
         console.log(errorMessage);
       }
 
