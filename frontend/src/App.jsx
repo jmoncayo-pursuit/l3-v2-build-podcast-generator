@@ -3,6 +3,7 @@ import {
   Upload,
   Mic,
   FileText,
+  MessageSquare,
   Loader2,
   Play,
   Pause,
@@ -20,6 +21,18 @@ function App() {
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [progress, setProgress] = useState(0);
 
+  // Separate voice states
+  const [textVoice, setTextVoice] = useState(
+    's3://voice-cloning-zero-shot/baf1ef41-36b6-428c-9bdf-50ba54682bd8/original/manifest.json'
+  ); // Default voice
+  const [conversationVoice1, setConversationVoice1] = useState(
+    's3://voice-cloning-zero-shot/e040bd1b-f190-4bdb-83f0-75ef85b18f84/original/manifest.json'
+  ); // Default voice
+  const [conversationVoice2, setConversationVoice2] = useState(
+    's3://voice-cloning-zero-shot/801a663f-efd0-4254-98d0-5c175514c3e8/jennifer/manifest.json'
+  ); // Default voice
+
+  const [conversation, setConversation] = useState(''); // New state for conversation
   const audioRef = useRef(null);
 
   const handleTranscriptSubmit = async (e) => {
@@ -37,7 +50,7 @@ function App() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ transcript }),
+          body: JSON.stringify({ transcript, voice: textVoice }), // Include voice
         }
       );
 
@@ -67,6 +80,7 @@ function App() {
 
     const formData = new FormData();
     formData.append('audio', audioFile);
+    formData.append('voice', textVoice); //include voice
 
     try {
       const response = await fetch(
@@ -84,6 +98,46 @@ function App() {
       }
 
       setGeneratedTranscript(data.transcript);
+      setAudioSrc(`${import.meta.env.VITE_BACKEND_URL}${data.audio}`);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'An error occurred'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConversationSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/generate-from-conversation`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversation,
+            voice1: conversationVoice1, // Pass voice1
+            voice2: conversationVoice2, // Pass voice2
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to generate script');
+      }
+
+      setGeneratedTranscript(conversation);
       setAudioSrc(`${import.meta.env.VITE_BACKEND_URL}${data.audio}`);
     } catch (err) {
       setError(
@@ -132,6 +186,23 @@ function App() {
     }
   };
 
+  //Sample voices (Replace with a better method to fetch all Play.ai voices)
+  const playAiVoices = [
+    {
+      id: 's3://voice-cloning-zero-shot/baf1ef41-36b6-428c-9bdf-50ba54682bd8/original/manifest.json',
+      name: 'Angelo',
+    },
+    {
+      id: 's3://voice-cloning-zero-shot/e040bd1b-f190-4bdb-83f0-75ef85b18f84/original/manifest.json',
+      name: 'Deedee',
+    },
+    {
+      id: 's3://voice-cloning-zero-shot/801a663f-efd0-4254-98d0-5c175514c3e8/jennifer/manifest.json',
+      name: 'Jennifer',
+    },
+    //Add more voices here
+  ];
+
   return (
     <div className='min-vh-100 bg-dark text-white'>
       <Container className='py-5'>
@@ -144,12 +215,29 @@ function App() {
 
         <div className='row'>
           {/* Transcript Input */}
-          <div className='col-md-6 mb-4'>
+          <div className='col-md-4 mb-4'>
             <div className='bg-secondary p-4 rounded shadow'>
               <h2 className='h5 mb-3 d-flex align-items-center'>
                 <FileText className='me-2' />
                 Text to Podcast
               </h2>
+              <Form.Group className='mb-3'>
+                <Form.Label>Select Voice</Form.Label>
+                <Form.Select
+                  value={textVoice}
+                  onChange={(e) => setTextVoice(e.target.value)}
+                  className='bg-dark text-white'
+                >
+                  {playAiVoices.map((voiceOption) => (
+                    <option
+                      key={voiceOption.id}
+                      value={voiceOption.id}
+                    >
+                      {voiceOption.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
               <Form onSubmit={handleTranscriptSubmit}>
                 <Form.Control
                   as='textarea'
@@ -178,7 +266,7 @@ function App() {
           </div>
 
           {/* Audio Input */}
-          <div className='col-md-6 mb-4'>
+          <div className='col-md-4 mb-4'>
             <div className='bg-secondary p-4 rounded shadow'>
               <h2 className='h5 mb-3 d-flex align-items-center'>
                 <Mic className='me-2' />
@@ -221,6 +309,78 @@ function App() {
                     </>
                   ) : (
                     'Generate from Audio'
+                  )}
+                </Button>
+              </Form>
+            </div>
+          </div>
+          {/* Conversation Input */}
+          <div className='col-md-4 mb-4'>
+            <div className='bg-secondary p-4 rounded shadow'>
+              <h2 className='h5 mb-3 d-flex align-items-center'>
+                <MessageSquare className='me-2' />
+                Conversation to Podcast
+              </h2>
+              {/* Voice Selection for Conversation */}
+              <Form.Group className='mb-3'>
+                <Form.Label>Select Voice 1</Form.Label>
+                <Form.Select
+                  value={conversationVoice1}
+                  onChange={(e) =>
+                    setConversationVoice1(e.target.value)
+                  }
+                  className='bg-dark text-white'
+                >
+                  {playAiVoices.map((voiceOption) => (
+                    <option
+                      key={voiceOption.id}
+                      value={voiceOption.id}
+                    >
+                      {voiceOption.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className='mb-3'>
+                <Form.Label>Select Voice 2</Form.Label>
+                <Form.Select
+                  value={conversationVoice2}
+                  onChange={(e) =>
+                    setConversationVoice2(e.target.value)
+                  }
+                  className='bg-dark text-white'
+                >
+                  {playAiVoices.map((voiceOption) => (
+                    <option
+                      key={voiceOption.id}
+                      value={voiceOption.id}
+                    >
+                      {voiceOption.name}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form onSubmit={handleConversationSubmit}>
+                <Form.Control
+                  as='textarea'
+                  value={conversation}
+                  onChange={(e) => setConversation(e.target.value)}
+                  className='mb-3 bg-dark text-white'
+                  placeholder='Enter your conversation here...'
+                  rows='5'
+                />
+                <Button
+                  type='submit'
+                  disabled={loading || !conversation}
+                  className='w-100'
+                  variant='primary'
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className='spin' /> Generating
+                    </>
+                  ) : (
+                    'Generate from Conversation'
                   )}
                 </Button>
               </Form>

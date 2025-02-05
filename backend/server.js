@@ -43,25 +43,39 @@ function bufferToStream(buffer) {
   return stream;
 }
 
-const createAudioFileFromText = async (text) => {
+const createAudioFileFromText = async (text, voice) => {
   try {
+    const apiKey = process.env['PLAY.AI_API_SECRET'];
+    const userId = process.env['PLAY.AI_USER_ID'];
+
+    const headers = {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'X-USER-ID': userId,
+    };
+
+    const payload = {
+      model: 'PlayDialog',
+      text: text,
+      voice: voice,
+      outputFormat: 'mp3',
+    };
+
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}`,
+      'https://api.play.ai/api/v1/tts/stream',
       {
         method: 'POST',
-        headers: {
-          'xi-api-key': process.env.ELEVENLABS_XI_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: process.env.ELEVENLABS_MODEL_ID,
-        }),
+        headers: headers,
+        body: JSON.stringify(payload),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+      throw new Error(
+        `Play.ai API error: ${
+          response.status
+        } - ${await response.text()}`
+      );
     }
 
     const audioBuffer = await response.arrayBuffer();
@@ -116,15 +130,63 @@ app.post('/api/asr', upload.single('audio'), async (req, res) => {
 
 app.post('/api/generate-from-transcript', async (req, res) => {
   try {
-    const { transcript } = req.body;
+    const { transcript, voice } = req.body; // Get voice from request
     if (!transcript)
       return res
         .status(400)
         .json({ success: false, message: 'No transcript provided' });
-    const fileName = await createAudioFileFromText(transcript);
+
+    const fileName = await createAudioFileFromText(transcript, voice);
     res.json({ success: true, audio: `/public/${fileName}` });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+// --- New Endpoint: /api/generate-from-conversation ---
+app.post('/api/generate-from-conversation', async (req, res) => {
+  try {
+    const { conversation, voice1, voice2 } = req.body; // Get conversation and voices
+
+    if (!conversation) {
+      return res.status(400).json({
+        success: false,
+        message: 'No conversation provided',
+      });
+    }
+
+    // Split the conversation into turns (assuming "Host 1:" and "Host 2:")
+    const turns = conversation
+      .split(/(Host 1:|Host 2:)/)
+      .filter(Boolean);
+    let audioFiles = [];
+
+    // Loop through turns, generating audio for each speaker
+    for (let i = 0; i < turns.length; i += 2) {
+      const speaker = turns[i].trim(); // "Host 1:" or "Host 2:"
+      const text = turns[i + 1].trim(); // The actual text
+
+      const voice = speaker === 'Host 1:' ? voice1 : voice2;
+      const fileName = await createAudioFileFromText(text, voice);
+      audioFiles.push(path.join(__dirname, 'public', fileName)); // Store the file path
+    }
+
+    // Concatenate the audio files (you'll need to implement this function)
+    const concatenatedFile = await concatenateAudio(audioFiles);
+
+    // Clean up the individual audio files
+    audioFiles.forEach((file) => fs.unlinkSync(file));
+
+    res.json({
+      success: true,
+      audio: `/public/${path.basename(concatenatedFile)}`,
+    }); // Send the concatenated file path
+  } catch (error) {
+    console.error('Conversation generation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating audio from conversation',
+      error: error.message,
+    });
   }
 });
 
@@ -212,8 +274,12 @@ app.post(
 
       const transcript = result.response.text(); // Ensure this returns the transcript
 
-      // Generate podcast audio from the transcript
-      const fileName = await createAudioFileFromText(transcript);
+      const { voice } = req.body;
+
+      const fileName = await createAudioFileFromText(
+        transcript,
+        voice
+      );
 
       // Send the path to the generated audio file and transcript in the response
       res.json({
@@ -225,7 +291,7 @@ app.post(
       console.error('Error generating podcast from audio:', error);
       let errorMessage = 'Error generating podcast from audio';
 
-      if (error.message.includes('ElevenLabs API error')) {
+      if (error.message.includes('Play.ai API error')) {
         errorMessage = error.message;
       }
       // Specific handling for Gemini API errors
@@ -258,3 +324,27 @@ app.post(
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// ----- Helper Functions -----
+async function concatenateAudio(audioFiles) {
+  const ffmpeg = require('fluent-ffmpeg');
+  const outputPath = path.join(__dirname, 'public', `${uuid()}.mp3`);
+
+  return new Promise((resolve, reject) => {
+    const command = ffmpeg();
+    audioFiles.forEach((file) => {
+      command.input(file);
+    });
+
+    command
+      .on('end', () => {
+        console.log('Audio concatenation completed');
+        resolve(outputPath);
+      })
+      .on('error', (err) => {
+        console.error('Error concatenating audio:', err);
+        reject(err);
+      })
+      .mergeToFile(outputPath);
+  });
+}
