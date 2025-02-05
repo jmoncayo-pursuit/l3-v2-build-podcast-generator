@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config();
 
 const express = require('express');
@@ -164,16 +163,52 @@ app.post(
         `Uploaded file ${uploadResult.file.displayName} as: ${uploadResult.file.uri}`
       );
 
-      // Use the file URI in the generateContent call
-      const result = await model.generateContent([
-        'Generate a transcript of the speech.', // Your prompt
-        {
-          fileData: {
-            fileUri: file.uri,
-            mimeType: file.mimeType,
-          },
-        },
-      ]);
+      // --- Retry Mechanism with Exponential Backoff ---
+      const maxRetries = 3;
+      let retryCount = 0;
+      let result = null;
+      let errorMessage = 'Error generating podcast from audio'; // Default error message
+
+      while (retryCount < maxRetries) {
+        try {
+          result = await model.generateContent([
+            'Generate a transcript of the speech.',
+            {
+              fileData: {
+                fileUri: file.uri,
+                mimeType: file.mimeType,
+              },
+            },
+          ]);
+          break; // If successful, exit the loop
+        } catch (error) {
+          if (
+            error.name === 'GoogleGenerativeAIFetchError' &&
+            (error.message.includes('overloaded') ||
+              error.message.includes('temporarily unavailable'))
+          ) {
+            retryCount++;
+            const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+            console.log(
+              `Gemini API unavailable (status: ${error.status}, message: ${error.message}). Retry attempt ${retryCount}/${maxRetries} after ${delay}ms`
+            );
+            errorMessage = `Gemini API Error: The service is temporarily unavailable. Please try again later. Attempt ${retryCount}/${maxRetries}.`;
+            await new Promise((resolve) =>
+              setTimeout(resolve, delay)
+            );
+          } else {
+            throw error; // Re-throw other errors
+          }
+        }
+      }
+
+      if (!result) {
+        errorMessage = `Gemini API failed after ${maxRetries} retries. Please try again later.`;
+        console.error(errorMessage);
+        return res
+          .status(500)
+          .json({ success: false, message: errorMessage }); // Send error response
+      }
 
       const transcript = result.response.text(); // Ensure this returns the transcript
 
@@ -188,10 +223,25 @@ app.post(
       });
     } catch (error) {
       console.error('Error generating podcast from audio:', error);
+      let errorMessage = 'Error generating podcast from audio';
+
+      if (error.message.includes('ElevenLabs API error')) {
+        errorMessage = error.message;
+      }
+      // Specific handling for Gemini API errors
+      if (
+        error.name === 'GoogleGenerativeAIFetchError' ||
+        error.message.includes('overloaded') ||
+        error.message.includes('temporarily unavailable')
+      ) {
+        errorMessage = `Gemini API Error: The service is temporarily unavailable. Please try again later.`;
+        console.log(errorMessage);
+      }
+
       res.status(500).json({
         success: false,
-        message: 'Error generating podcast from audio',
-        error: error.message,
+        message: errorMessage,
+        error: error.message, // Include original error for debugging
       });
     } finally {
       // Clean up the temporary file
