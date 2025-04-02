@@ -9,6 +9,7 @@ import {
   Pause,
 } from 'lucide-react';
 import { Container, Navbar, Button, Form } from 'react-bootstrap'; // Keeping Bootstrap for consistent styling
+import './App.css'; // Import the CSS file
 
 function App() {
   const [transcript, setTranscript] = useState('');
@@ -204,248 +205,247 @@ function App() {
   ];
 
   return (
-    <div className='min-vh-100 bg-dark text-white'>
-      <Container className='py-5'>
-        <div className='text-center mb-4'>
-          <h1 className='display-4'>AI Podcast Generator</h1>
-          <p className='text-muted'>
-            Transform your content into engaging podcast conversations
-          </p>
-        </div>
-
-        <div className='row'>
-          {/* Transcript Input */}
-          <div className='col-md-4 mb-4'>
-            <div className='bg-secondary p-4 rounded shadow'>
-              <h2 className='h5 mb-3 d-flex align-items-center'>
-                <FileText className='me-2' />
-                Text to Podcast
-              </h2>
-              <Form.Group className='mb-3'>
-                <Form.Label>Select Voice</Form.Label>
-                <Form.Select
-                  value={textVoice}
-                  onChange={(e) => setTextVoice(e.target.value)}
-                  className='bg-dark text-white'
-                >
-                  {playAiVoices.map((voiceOption) => (
-                    <option
-                      key={voiceOption.id}
-                      value={voiceOption.id}
-                    >
-                      {voiceOption.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-              <Form onSubmit={handleTranscriptSubmit}>
-                <Form.Control
-                  as='textarea'
-                  value={transcript}
-                  onChange={(e) => setTranscript(e.target.value)}
-                  className='mb-3 bg-dark text-white'
-                  placeholder='Enter your text content here...'
-                  rows='5'
-                />
-                <Button
-                  type='submit'
-                  disabled={loading || !transcript}
-                  className='w-100'
-                  variant='primary'
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className='spin' /> Generating
-                    </>
-                  ) : (
-                    'Generate from Text'
-                  )}
-                </Button>
-              </Form>
-            </div>
+    <div className="app-container">
+      <div className="min-vh-100 bg-dark text-white">
+        <Container className="py-5">
+          <div className="text-center mb-4">
+            <h1 className="display-4">AI Podcast Generator</h1>
+            <p className="text-muted">
+              Transform your content into engaging podcast conversations
+            </p>
           </div>
 
-          {/* Audio Input */}
-          <div className='col-md-4 mb-4'>
-            <div className='bg-secondary p-4 rounded shadow'>
-              <h2 className='h5 mb-3 d-flex align-items-center'>
-                <Mic className='me-2' />
-                Audio to Podcast
-              </h2>
-              <Form onSubmit={handleAudioSubmit}>
-                <Form.Group className='mb-3'>
-                  <Form.Label
-                    htmlFor='audio-upload'
-                    className='w-100'
+          <div className="row">
+            {/* Transcript Input */}
+            <div className="col-md-4 mb-4">
+              <div className="bg-secondary p-4 rounded shadow">
+                <h2 className="h5 mb-3 d-flex align-items-center">
+                  <FileText className="me-2" />
+                  Text to Podcast
+                </h2>
+                <Form.Group className="mb-3">
+                  <Form.Label>Select Voice</Form.Label>
+                  <Form.Select
+                    value={textVoice}
+                    onChange={(e) => setTextVoice(e.target.value)}
+                    className="bg-dark text-white"
                   >
-                    <div className='border border-dashed border-light rounded p-4 text-center'>
-                      <Upload className='mb-2' />
-                      <span className='text-muted'>
-                        {audioFile
-                          ? audioFile.name
-                          : 'Click to upload audio file'}
-                      </span>
-                      <Form.Control
-                        type='file'
-                        accept='audio/*'
-                        onChange={(e) =>
-                          setAudioFile(e.target.files?.[0] || null)
-                        }
-                        className='d-none'
-                        id='audio-upload'
-                      />
-                    </div>
-                  </Form.Label>
+                    {playAiVoices.map((voiceOption) => (
+                      <option
+                        key={voiceOption.id}
+                        value={voiceOption.id}
+                      >
+                        {voiceOption.name}
+                      </option>
+                    ))}
+                  </Form.Select>
                 </Form.Group>
-                <Button
-                  type='submit'
-                  disabled={loading || !audioFile}
-                  className='w-100 mt-3'
-                  variant='primary'
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className='spin' /> Generating
-                    </>
-                  ) : (
-                    'Generate from Audio'
-                  )}
-                </Button>
-              </Form>
+                <Form onSubmit={handleTranscriptSubmit}>
+                  <Form.Control
+                    as="textarea"
+                    value={transcript}
+                    onChange={(e) => setTranscript(e.target.value)}
+                    className="mb-3 bg-dark text-white"
+                    placeholder="Enter your text content here..."
+                    rows="5"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={loading || !transcript}
+                    className="w-100"
+                    variant="primary"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="spin" /> Generating
+                      </>
+                    ) : (
+                      "Generate from Text"
+                    )}
+                  </Button>
+                </Form>
+              </div>
+            </div>
+
+            {/* Audio Input */}
+            <div className="col-md-4 mb-4">
+              <div className="bg-secondary p-4 rounded shadow">
+                <h2 className="h5 mb-3 d-flex align-items-center">
+                  <Mic className="me-2" />
+                  Audio to Podcast
+                </h2>
+                <Form onSubmit={handleAudioSubmit}>
+                  <Form.Group className="mb-3">
+                    <Form.Label htmlFor="audio-upload" className="w-100">
+                      <div className="border border-dashed border-light rounded p-4 text-center">
+                        <Upload className="mb-2" />
+                        <span className="text-muted">
+                          {audioFile
+                            ? audioFile.name
+                            : "Click to upload audio file"}
+                        </span>
+                        <Form.Control
+                          type="file"
+                          accept="audio/*"
+                          onChange={(e) =>
+                            setAudioFile(e.target.files?.[0] || null)
+                          }
+                          className="d-none"
+                          id="audio-upload"
+                        />
+                      </div>
+                    </Form.Label>
+                  </Form.Group>
+                  <Button
+                    type="submit"
+                    disabled={loading || !audioFile}
+                    className="w-100 mt-3"
+                    variant="primary"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="spin" /> Generating
+                      </>
+                    ) : (
+                      "Generate from Audio"
+                    )}
+                  </Button>
+                </Form>
+              </div>
+            </div>
+            {/* Conversation Input */}
+            <div className="col-md-4 mb-4">
+              <div className="bg-secondary p-4 rounded shadow">
+                <h2 className="h5 mb-3 d-flex align-items-center">
+                  <MessageSquare className="me-2" />
+                  Conversation to Podcast
+                </h2>
+                {/* Voice Selection for Conversation */}
+                <Form.Group className="mb-3">
+                  <Form.Label>Select Voice 1</Form.Label>
+                  <Form.Select
+                    value={conversationVoice1}
+                    onChange={(e) =>
+                      setConversationVoice1(e.target.value)
+                    }
+                    className="bg-dark text-white"
+                  >
+                    {playAiVoices.map((voiceOption) => (
+                      <option
+                        key={voiceOption.id}
+                        value={voiceOption.id}
+                      >
+                        {voiceOption.name}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Select Voice 2</Form.Label>
+                  <Form.Select
+                    value={conversationVoice2}
+                    onChange={(e) =>
+                      setConversationVoice2(e.target.value)
+                    }
+                    className="bg-dark text-white"
+                  >
+                    {playAiVoices.map((voiceOption) => (
+                      <option
+                        key={voiceOption.id}
+                        value={voiceOption.id}
+                      >
+                        {voiceOption.name}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+                <Form onSubmit={handleConversationSubmit}>
+                  <Form.Control
+                    as="textarea"
+                    value={conversation}
+                    onChange={(e) => setConversation(e.target.value)}
+                    className="mb-3 bg-dark text-white"
+                    placeholder="Enter your conversation here..."
+                    rows="5"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={loading || !conversation}
+                    className="w-100"
+                    variant="primary"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="spin" /> Generating
+                      </>
+                    ) : (
+                      "Generate from Conversation"
+                    )}
+                  </Button>
+                </Form>
+              </div>
             </div>
           </div>
-          {/* Conversation Input */}
-          <div className='col-md-4 mb-4'>
-            <div className='bg-secondary p-4 rounded shadow'>
-              <h2 className='h5 mb-3 d-flex align-items-center'>
-                <MessageSquare className='me-2' />
-                Conversation to Podcast
-              </h2>
-              {/* Voice Selection for Conversation */}
-              <Form.Group className='mb-3'>
-                <Form.Label>Select Voice 1</Form.Label>
-                <Form.Select
-                  value={conversationVoice1}
-                  onChange={(e) =>
-                    setConversationVoice1(e.target.value)
-                  }
-                  className='bg-dark text-white'
+
+          {/* Error Message */}
+          {error && (
+            <div className="alert alert-danger mt-4">{error}</div>
+          )}
+
+          {/* Generated Script */}
+          {generatedTranscript && (
+            <div className="bg-secondary p-4 rounded shadow mt-4">
+              <h2 className="h5">Generated Podcast Script</h2>
+              <pre className="bg-dark text-white p-3 rounded">
+                {generatedTranscript}
+              </pre>
+            </div>
+          )}
+
+          {/* Audio Player */}
+          {audioSrc && (
+            <div className="mt-4">
+              <h2 className="h5">Audio Player</h2>
+              <div className="d-flex align-items-center justify-content-between mb-2">
+                <Button
+                  variant="outline-light"
+                  onClick={togglePlayPause}
                 >
-                  {playAiVoices.map((voiceOption) => (
-                    <option
-                      key={voiceOption.id}
-                      value={voiceOption.id}
-                    >
-                      {voiceOption.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-              <Form.Group className='mb-3'>
-                <Form.Label>Select Voice 2</Form.Label>
-                <Form.Select
-                  value={conversationVoice2}
-                  onChange={(e) =>
-                    setConversationVoice2(e.target.value)
-                  }
-                  className='bg-dark text-white'
-                >
-                  {playAiVoices.map((voiceOption) => (
-                    <option
-                      key={voiceOption.id}
-                      value={voiceOption.id}
-                    >
-                      {voiceOption.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-              <Form onSubmit={handleConversationSubmit}>
-                <Form.Control
-                  as='textarea'
-                  value={conversation}
-                  onChange={(e) => setConversation(e.target.value)}
-                  className='mb-3 bg-dark text-white'
-                  placeholder='Enter your conversation here...'
-                  rows='5'
+                  {isPlaying ? <Pause /> : <Play />}
+                </Button>
+
+                <input
+                  type="range"
+                  className="form-range w-75"
+                  min="0"
+                  max="100"
+                  value={progress}
+                  onChange={() => {}} // Dummy onChange to remove warning
                 />
-                <Button
-                  type='submit'
-                  disabled={loading || !conversation}
-                  className='w-100'
-                  variant='primary'
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className='spin' /> Generating
-                    </>
-                  ) : (
-                    'Generate from Conversation'
-                  )}
-                </Button>
-              </Form>
-            </div>
-          </div>
-        </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className='alert alert-danger mt-4'>{error}</div>
-        )}
-
-        {/* Generated Script */}
-        {generatedTranscript && (
-          <div className='bg-secondary p-4 rounded shadow mt-4'>
-            <h2 className='h5'>Generated Podcast Script</h2>
-            <pre className='bg-dark text-white p-3 rounded'>
-              {generatedTranscript}
-            </pre>
-          </div>
-        )}
-
-        {/* Audio Player */}
-        {audioSrc && (
-          <div className='mt-4'>
-            <h2 className='h5'>Audio Player</h2>
-            <div className='d-flex align-items-center justify-content-between mb-2'>
-              <Button
-                variant='outline-light'
-                onClick={togglePlayPause}
-              >
-                {isPlaying ? <Pause /> : <Play />}
-              </Button>
-
-              <input
-                type='range'
-                className='form-range w-75'
-                min='0'
-                max='100'
-                value={progress}
-                onChange={() => {}} // Dummy onChange to remove warning
-              />
-
-              <Form.Control
-                type='number'
-                min='0.5'
-                max='2.0'
-                step='0.1'
-                value={playbackRate}
-                onChange={handlePlaybackRateChange}
-                className='w-auto'
-                style={{ width: '60px' }}
+                <Form.Control
+                  type="number"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={playbackRate}
+                  onChange={handlePlaybackRateChange}
+                  className="w-auto"
+                  style={{ width: "60px" }}
+                />
+              </div>
+              <audio
+                ref={audioRef}
+                src={audioSrc}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
               />
             </div>
-            <audio
-              ref={audioRef}
-              src={audioSrc}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-            />
-          </div>
-        )}
-      </Container>
+          )}
+        </Container>
+      </div>
     </div>
   );
 }

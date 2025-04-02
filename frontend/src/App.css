@@ -1,9 +1,32 @@
+html,
+body {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+  background-color: #242424 !important;
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 1rem !important; /* Keep some padding for content */
   text-align: center;
   background-color: #242424;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Add styles for the app container */
+.app-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100vh !important;
+  box-sizing: border-box !important;
 }
 
 .logo {
@@ -50,6 +73,33 @@
   color: white !important;
 }
 
-body {
-  background-color: #242424 !important;
+/* Override Bootstrap container classes */
+.container,
+.container-fluid,
+.container-sm,
+.container-md,
+.container-lg,
+.container-xl,
+.container-xxl {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-left: 0px !important; /* Remove left padding */
+  padding-right: 0px !important; /* Remove right padding */
+  margin-right: auto !important;
+  margin-left: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Override any row elements */
+.row {
+  width: 100% !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Ensure all direct children of root also follow full width */
+#root > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
